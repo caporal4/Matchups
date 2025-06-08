@@ -9,4 +9,5 @@ import Foundation
 
 class TeamCache {
     static let shared = NSCache<NSString, PlayersResponse>()
+    static var cacheTracker = [Date]()
 }

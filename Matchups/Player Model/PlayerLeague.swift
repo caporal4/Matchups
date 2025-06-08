@@ -10,5 +10,5 @@ import Foundation
 struct PlayerLeague: Codable, Hashable {
     var jersey: Int?
     var active: Bool
-    var pos: String
+    var pos: String?
 }

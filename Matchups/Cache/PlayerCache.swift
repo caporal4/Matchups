@@ -6,3 +6,8 @@
 //
 
 import Foundation
+
+class PlayerCache {
+    static let shared = NSCache<NSString, StatisticsResponse>()
+    static var cacheTracker = [Date]()
+}

@@ -7,6 +7,10 @@
 
 import Foundation
 
-struct TeamsResponse: Codable {
+class TeamsResponse: Codable {
     var response: [Team]
+    
+    init(response: [Team]) {
+        self.response = response
+    }
 }

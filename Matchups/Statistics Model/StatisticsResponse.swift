@@ -6,3 +6,7 @@
 //
 
 import Foundation
+
+class StatisticsResponse: Codable {
+    var response: [Statistics]
+}

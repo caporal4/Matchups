@@ -7,6 +7,10 @@
 
 import Foundation
 
-struct PlayersResponse: Codable {
+class PlayersResponse: Codable {
     var response: [Player]
+    
+    init(response: [Player]) {
+        self.response = response
+    }
 }

@@ -7,12 +7,27 @@
 
 import SwiftUI
 
-struct PlayerViewViewModel: View {
+struct PlayerView: View {
+    @StateObject private var viewModel: ViewModel
+        
+    init(player: Player) {
+        let viewModel = ViewModel(player: player)
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        List {
+            Text(viewModel.player.firstname)
+            ForEach(viewModel.statistics) { stat in
+                Text(String(stat.points))
+            }
+        }
+        .task {
+            await viewModel.fetchData()
+        }
     }
 }
 
 #Preview {
-    PlayerViewViewModel()
+    PlayerView(player: .sample)
 }

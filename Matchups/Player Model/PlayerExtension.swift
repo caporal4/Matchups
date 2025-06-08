@@ -19,7 +19,7 @@ extension Player {
             weight: Weight(),
             college: "Oklahoma State",
             affiliation: "Oklahoma State/USA",
-            leagues:["Standard": PlayerLeague(jersey: 2, active: true, pos: "G")]
+            leagues: ["Standard": PlayerLeague(jersey: 2, active: true, pos: "G")]
         )
         return sample
     }

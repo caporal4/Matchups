@@ -7,6 +7,6 @@
 
 import Foundation
 
-class Statistics: Codable {
-    
+class Statistics: Codable, Identifiable {
+    var points: Int
 }
