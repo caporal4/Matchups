@@ -12,7 +12,12 @@ extension PlayerView {
     class ViewModel: ObservableObject {
         var player: Player
         
+        @Published var isLoading = false
+
         @Published var statistics = [Statistics]()
+        
+        @Published var ppg = 0.0
+        @Published var imageName: String?
                 
         let token = Bundle.main.object(forInfoDictionaryKey: "Token") as? String
         let header = Bundle.main.object(forInfoDictionaryKey: "Header") as? String
@@ -22,6 +27,7 @@ extension PlayerView {
         }
             
         func fetchData() async {
+            isLoading = true
             guard let token else { return }
             guard let header else { return }
             guard let url = URL(string: URLString) else { return }
@@ -45,6 +51,7 @@ extension PlayerView {
                 await MainActor.run {
                     statistics = cachedVersion.response
                     print("Retrieved cached \(player.firstname)\(player.lastname) stats.")
+                    isLoading = false
                 }
             } else {
                 do {
@@ -59,6 +66,9 @@ extension PlayerView {
                         print("Cached \(player.firstname)\(player.lastname) stats.")
                         PlayerCache.cacheTracker.insert(Date.now, at: 0)
                         print("Set the cache tracker")
+                        isLoading = false
+                        averagePPG()
+                        createImage()
                     }
                 } catch {
                     print("Decoding failed with error: \(error)")
@@ -66,13 +76,17 @@ extension PlayerView {
             }
         }
         
-//        func averagePPG() -> Double {
-//            var pointTotal = 0
-//            for stat in statistics {
-//                pointTotal += stat.points
-//            }
-//            return Double(pointTotal/statistics.count)
-//        }
+        func averagePPG() {
+            var pointTotal = 0
+            for stat in statistics {
+                pointTotal += stat.points
+            }
+            ppg = Double(pointTotal/statistics.count)
+        }
+        
+        func createImage() {
+            imageName = "\(player.firstname)-\(player.lastname)"
+        }
         
         init(player: Player) {
             self.player = player

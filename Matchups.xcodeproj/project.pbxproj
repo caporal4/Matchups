@@ -14,7 +14,6 @@
 		58EEC0242DF4A70F00710BF0 /* Exceptions for "Matchups" folder in "Matchups" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Assets.xcassets,
 				Info.plist,
 			);
 			target = 5848978A2DC94EA80010C8F0 /* Matchups */;

@@ -17,15 +17,29 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(viewModel.teams) { team in
-                    NavigationLink(value: team) {
-                        Text(team.name)
+            if viewModel.isLoading {
+                ProgressView("Loading...")
+                    .progressViewStyle(CircularProgressViewStyle())
+            } else {
+                List {
+                    Section("East") {
+                        ForEach(viewModel.eastTeams) { team in
+                            NavigationLink(value: team) {
+                                Text(team.name)
+                            }
+                        }
+                    }
+                    Section("West") {
+                        ForEach(viewModel.westTeams) { team in
+                            NavigationLink(value: team) {
+                                Text(team.name)
+                            }
+                        }
                     }
                 }
-            }
-            .navigationDestination(for: Team.self) { team in
-                TeamView(team: team)
+                .navigationDestination(for: Team.self) { team in
+                    TeamView(team: team)
+                }
             }
         }
         .task {

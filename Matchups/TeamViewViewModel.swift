@@ -12,6 +12,8 @@ extension TeamView {
     class ViewModel: ObservableObject {
         var team: Team
         
+        @Published var isLoading = false
+        
         @Published var players = [Player]()
                 
         let token = Bundle.main.object(forInfoDictionaryKey: "Token") as? String
@@ -22,6 +24,7 @@ extension TeamView {
         }
             
         func fetchData() async {
+            isLoading = true
             guard let token else { return }
             guard let header else { return }
             guard let url = URL(string: URLString) else { return }
@@ -43,6 +46,7 @@ extension TeamView {
                 await MainActor.run {
                     players = cachedVersion.response.sorted()
                     print("Retrieved cached \(team.name).")
+                    isLoading = false
                 }
             } else {
                 do {
@@ -55,6 +59,7 @@ extension TeamView {
                         print("Cached \(team.name)")
                         TeamCache.cacheTracker.insert(Date.now, at: 0)
                         print("Set the cache tracker")
+                        isLoading = false
                     }
                 } catch {
                     print("Decoding failed with error: \(error)")

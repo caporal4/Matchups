@@ -16,12 +16,25 @@ struct PlayerView: View {
     }
     
     var body: some View {
+        if let name = viewModel.imageName {
+            Image(name)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 100, height: 100)
+        }
         List {
-            Text(viewModel.player.firstname)
-            ForEach(viewModel.statistics) { stat in
-                Text(String(stat.points))
+            if viewModel.isLoading {
+                ProgressView("Loading...")
+                    .progressViewStyle(CircularProgressViewStyle())
+            } else {
+                Section {
+                    Text("Points Per Game: \(String(describing: viewModel.ppg))")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
             }
         }
+        .navigationTitle("\(viewModel.player.firstname) \(viewModel.player.lastname)")
+        .navigationBarTitleDisplayMode(.inline)
         .task {
             await viewModel.fetchData()
         }

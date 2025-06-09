@@ -10,7 +10,11 @@ import Foundation
 extension ContentView {
     @MainActor
     class ViewModel: ObservableObject {
-        @Published var teams = [Team]()
+        @Published var westTeams = [Team]()
+        @Published var eastTeams = [Team]()
+        
+        @Published var isLoading = false
+        
         @Published var baseTeams = [Team]()
         
         @Published var filterText = ""
@@ -21,6 +25,7 @@ extension ContentView {
         let URLString = "https://v2.nba.api-sports.io/teams?"
             
         func fetchData() async {
+            isLoading = true
             guard let token else { return }
             guard let header else { return }
             guard let url = URL(string: URLString) else { return }
@@ -28,39 +33,32 @@ extension ContentView {
             var request = URLRequest(url: url)
             request.addValue(token, forHTTPHeaderField: header)
             
-//            let fiveMinutesAgo = Date().addingTimeInterval(-300)
-//
-//            if !LeagueCacheTracker.cacheList.isEmpty {
-//                if LeagueCacheTracker.cacheList[0] < fiveMinutesAgo {
-//                    LeagueCache.shared.removeObject(forKey: "CachedObject")
-//                }
-//            }
-//            
-//            if let cachedVersion = LeagueCache.shared.object(forKey: "CachedObject") {
-//                await MainActor.run {
-//                    teams = cachedVersion
-//                }
-//            } else {
-                do {
-                    let (data, _) = try await URLSession.shared.data(for: request)
-                    let decoder = JSONDecoder()
-                    if let decodedResponse = try? decoder.decode(TeamsResponse.self, from: data) {
-                        teams = decodedResponse.response
-                            .filter { $0.nbaFranchise == true }
-                            .filter { $0.allStar == false }
-                            .sorted()
-                        baseTeams = teams
-//                        LeagueCache.shared.setObject(teams, forKey: "CachedObject")
-//                        LeagueCacheTracker.cacheList.insert(Date.now, at: 0)
-                    }
-                } catch {
-                    print("Decoding failed with error: \(error)")
+            do {
+                let (data, _) = try await URLSession.shared.data(for: request)
+                let decoder = JSONDecoder()
+                if let decodedResponse = try? decoder.decode(TeamsResponse.self, from: data) {
+                    baseTeams = decodedResponse.response
+                        .filter { $0.nbaFranchise == true }
+                        .filter { $0.allStar == false }
+                        .sorted()
+                    western()
+                    eastern()
+                    isLoading = false
                 }
-//            }
+            } catch {
+                print("Decoding failed with error: \(error)")
+            }
+
+        }
+        func western() {
+            westTeams = baseTeams.filter { $0.leagues["standard"]?.conference == "West" }
+        }
+        
+        func eastern() {
+            eastTeams = baseTeams.filter { $0.leagues["standard"]?.conference == "East" }
         }
 
         func filter() {
-            teams = baseTeams.filter { $0.name.lowercased().contains(filterText.lowercased()) }
         }
     }
 }

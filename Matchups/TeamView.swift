@@ -25,13 +25,21 @@ struct TeamView: View {
                 ProgressView()
             }
             .frame(width: 100, height: 100)
+            
             List {
-                ForEach(viewModel.players) { player in
-                    NavigationLink(value: player) {
-                        Text("\(player.firstname) \(player.lastname)")
+                if viewModel.isLoading {
+                    ProgressView("Loading...")
+                        .progressViewStyle(CircularProgressViewStyle())
+                } else {
+                    ForEach(viewModel.players) { player in
+                        NavigationLink(value: player) {
+                            Text("\(player.firstname) \(player.lastname)")
+                        }
                     }
                 }
             }
+            .navigationTitle(viewModel.team.name)
+            .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: Player.self) { player in
                 PlayerView(player: player)
             }
