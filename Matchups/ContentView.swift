@@ -21,24 +21,32 @@ struct ContentView: View {
                 ProgressView("Loading...")
                     .progressViewStyle(CircularProgressViewStyle())
             } else {
-                List {
-                    Section("East") {
-                        ForEach(viewModel.eastTeams) { team in
-                            NavigationLink(value: team) {
-                                Text(team.name)
+                ZStack {
+                    Color.PistonsBlue
+                        .opacity(0.35)
+                        .ignoresSafeArea()
+                    List {
+                        Section("East") {
+                            ForEach(viewModel.eastTeams) { team in
+                                NavigationLink(value: team) {
+                                    Text(team.name)
+                                }
+                            }
+                        }
+                        Section("West") {
+                            ForEach(viewModel.westTeams) { team in
+                                NavigationLink(value: team) {
+                                    Text(team.name)
+                                }
                             }
                         }
                     }
-                    Section("West") {
-                        ForEach(viewModel.westTeams) { team in
-                            NavigationLink(value: team) {
-                                Text(team.name)
-                            }
-                        }
+                    .scrollContentBackground(.hidden)
+                    .toolbarBackground(Color.PistonsBlue.opacity(0.35), for: .navigationBar, .tabBar)
+                    .navigationTitle("Matchups")
+                    .navigationDestination(for: Team.self) { team in
+                        TeamView(team: team)
                     }
-                }
-                .navigationDestination(for: Team.self) { team in
-                    TeamView(team: team)
                 }
             }
         }
