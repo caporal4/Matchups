@@ -10,14 +10,11 @@ import Foundation
 extension ContentView {
     @MainActor
     class ViewModel: ObservableObject {
+        @Published var teams = [Team]()
         @Published var westTeams = [Team]()
         @Published var eastTeams = [Team]()
         
         @Published var isLoading = false
-        
-        @Published var baseTeams = [Team]()
-        
-        @Published var filterText = ""
         
         let token = Bundle.main.object(forInfoDictionaryKey: "Token") as? String
         let header = Bundle.main.object(forInfoDictionaryKey: "Header") as? String
@@ -26,39 +23,39 @@ extension ContentView {
             
         func fetchData() async {
             isLoading = true
-            guard let token else { return }
-            guard let header else { return }
-            guard let url = URL(string: URLString) else { return }
             
-            var request = URLRequest(url: url)
-            request.addValue(token, forHTTPHeaderField: header)
+            guard let request = buildRequest() else { return }
             
             do {
                 let (data, _) = try await URLSession.shared.data(for: request)
                 let decoder = JSONDecoder()
                 if let decodedResponse = try? decoder.decode(TeamsResponse.self, from: data) {
-                    baseTeams = decodedResponse.response
-                        .filter { $0.nbaFranchise == true }
-                        .filter { $0.allStar == false }
-                        .sorted()
-                    western()
-                    eastern()
+                    filterTeams(from: decodedResponse)
                     isLoading = false
                 }
             } catch {
                 print("Decoding failed with error: \(error)")
             }
-
-        }
-        func western() {
-            westTeams = baseTeams.filter { $0.leagues["standard"]?.conference == "West" }
         }
         
-        func eastern() {
-            eastTeams = baseTeams.filter { $0.leagues["standard"]?.conference == "East" }
+        func buildRequest() -> URLRequest? {
+            guard let token else { return nil }
+            guard let header else { return nil }
+            guard let url = URL(string: URLString) else { return nil }
+            
+            var request = URLRequest(url: url)
+            request.addValue(token, forHTTPHeaderField: header)
+            return request
         }
+        
+        func filterTeams(from response: TeamsResponse) {
+            teams = response.response
+                .filter { $0.nbaFranchise == true }
+                .filter { $0.allStar == false }
+                .sorted()
+            westTeams = teams.filter { $0.leagues["standard"]?.conference == "West" }
+            eastTeams = teams.filter { $0.leagues["standard"]?.conference == "East" }
 
-        func filter() {
         }
     }
 }

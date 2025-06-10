@@ -12,11 +12,14 @@ extension PlayerView {
     class ViewModel: ObservableObject {
         var player: Player
         
-        @Published var isLoading = false
-
         @Published var statistics = [Statistics]()
         
-        @Published var ppg = 0.0
+        @Published var isLoading = false
+        
+        @Published var pointsPerGame = 0.0
+        @Published var reboundsPerGame = 0.0
+        @Published var assistsPerGame = 0.0
+        @Published var stealsPerGame = 0.0
         @Published var imageName: String?
                 
         let token = Bundle.main.object(forInfoDictionaryKey: "Token") as? String
@@ -28,13 +31,41 @@ extension PlayerView {
             
         func fetchData() async {
             isLoading = true
-            guard let token else { return }
-            guard let header else { return }
-            guard let url = URL(string: URLString) else { return }
+
+            guard let request = buildRequest() else { return }
+
+            if let cachedVersion = PlayerCache.shared.object(
+                forKey: NSString(string: "\(player.firstname)\(player.lastname)")
+            ) {
+                statistics = cachedVersion.response
+                print("Retrieved cached \(player.firstname) \(player.lastname) stats.")
+                createImageAndStats()
+            } else {
+                do {
+                    let (data, _) = try await URLSession.shared.data(for: request)
+                    let decoder = JSONDecoder()
+                    if let decodedResponse = try? decoder.decode(StatisticsResponse.self, from: data) {
+                        statistics = decodedResponse.response
+                        setCacheAndCacheTracker(decodedResponse)
+                        createImageAndStats()
+                    }
+                } catch {
+                    print("Decoding failed with error: \(error)")
+                }
+            }
+        }
+        
+        func buildRequest() -> URLRequest? {
+            guard let token else { return nil }
+            guard let header else { return nil }
+            guard let url = URL(string: URLString) else { return nil }
             
             var request = URLRequest(url: url)
             request.addValue(token, forHTTPHeaderField: header)
-            
+            return request
+        }
+        
+        func checkCacheTracker() {
             let fiveMinutesAgo = Date().addingTimeInterval(-300)
 
             if !PlayerCache.cacheTracker.isEmpty {
@@ -44,44 +75,57 @@ extension PlayerView {
                     PlayerCache.shared.removeObject(forKey: NSString(string: "\(player.firstname)\(player.lastname)"))
                 }
             }
-
-            if let cachedVersion = PlayerCache.shared.object(
-                forKey: NSString(string: "\(player.firstname)\(player.lastname)")
-            ) {
-                await MainActor.run {
-                    statistics = cachedVersion.response
-                    print("Retrieved cached \(player.firstname)\(player.lastname) stats.")
-                    isLoading = false
-                }
-            } else {
-                do {
-                    let (data, _) = try await URLSession.shared.data(for: request)
-                    let decoder = JSONDecoder()
-                    if let decodedResponse = try? decoder.decode(StatisticsResponse.self, from: data) {
-                        statistics = decodedResponse.response
-                        PlayerCache.shared.setObject(
-                            decodedResponse,
-                            forKey: NSString(string: "\(player.firstname)\(player.lastname)")
-                        )
-                        print("Cached \(player.firstname)\(player.lastname) stats.")
-                        PlayerCache.cacheTracker.insert(Date.now, at: 0)
-                        print("Set the cache tracker")
-                        isLoading = false
-                        averagePPG()
-                        createImage()
-                    }
-                } catch {
-                    print("Decoding failed with error: \(error)")
-                }
-            }
         }
         
-        func averagePPG() {
+        func setCacheAndCacheTracker(_ response: StatisticsResponse) {
+            PlayerCache.shared.setObject(
+                response,
+                forKey: NSString(string: "\(player.firstname)\(player.lastname)")
+            )
+            print("Cached \(player.firstname) \(player.lastname) stats.")
+            PlayerCache.cacheTracker.insert(Date.now, at: 0)
+            print("Set the cache tracker")
+        }
+        
+        func createImageAndStats() {
+            createImage()
+            calculatePointsPerGame()
+            calculateReboundsPerGame()
+            calculateAssistsPerGame()
+            calculateStealsPerGame()
+            isLoading = false
+        }
+        
+        func calculatePointsPerGame() {
             var pointTotal = 0
             for stat in statistics {
                 pointTotal += stat.points
             }
-            ppg = Double(pointTotal/statistics.count)
+            pointsPerGame = Double(pointTotal/statistics.count)
+        }
+        
+        func calculateReboundsPerGame() {
+            var reboundTotal = 0
+            for stat in statistics {
+                reboundTotal += stat.totReb
+            }
+            reboundsPerGame = Double(reboundTotal/statistics.count)
+        }
+        
+        func calculateAssistsPerGame() {
+            var assistTotal = 0
+            for stat in statistics {
+                assistTotal += stat.assists
+            }
+            assistsPerGame = Double(assistTotal/statistics.count)
+        }
+        
+        func calculateStealsPerGame() {
+            var stealsTotal = 0
+            for stat in statistics {
+                stealsTotal += stat.steals
+            }
+            stealsPerGame = Double(stealsTotal/statistics.count)
         }
         
         func createImage() {
